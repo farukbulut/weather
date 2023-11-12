@@ -16,22 +16,30 @@ class Havadurumux:
     def add_city_thread(self, cities_list):
         for city_name, href in cities_list:
             myquery = {"link": href, "website": "havadurumux"}
-            existing_documents = self.connector.find_document("links", myquery)
             last_activity_date = datetime.now() - timedelta(days=1)
 
-            if existing_documents.count() == 0:
-                mydict = {
-                    "website": "havadurumux",
-                    "link": href,
-                    "city": city_name,
-                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    "last_activity": last_activity_date.strftime('%Y-%m-%d')
-                }
+            try:
+                # count_documents kullanarak belge sayısını al
+                document_count = self.connector.get_collection("links").count_documents(myquery)
 
-                inserted_id = self.connector.add_document("links", mydict)
-                print("-----------------------------------------------")
-                print(f"collect_id: {inserted_id} inserted")
-                print("-----------------------------------------------")
+                if document_count == 0:
+                    mydict = {
+                        "website": "havadurumux",
+                        "link": href,
+                        "city": city_name,
+                        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "last_activity": last_activity_date.strftime('%Y-%m-%d')
+                    }
+
+                    inserted_id = self.connector.add_document("links", mydict)
+                    print("-----------------------------------------------")
+                    print(f"collect_id: {inserted_id} inserted")
+                    print("-----------------------------------------------")
+
+            except Exception as e:
+                # Hata durumunda yapılacak işlemler
+                print(f"Bir hata oluştu: {e}")
+
 
     def fetch_cities(self):
         response = self.session.get("https://www.havadurumux.net/tum-sehirler/")
@@ -77,10 +85,14 @@ class Havadurumux:
                         temp_high_val = float(temp_high)
                         temp_low_val = float(temp_low)
 
-                        existing_data = self.connector.find_document("weather_data",
-                                                                     {"provincial_plate": provincial_plate,
-                                                                      "date": parsed_date})
-                        if existing_data.count() > 0:
+                        document_count = self.connector.get_collection("weather_data").count_documents(
+                            {
+                                "provincial_plate": provincial_plate,
+                                "date": parsed_date
+                            }
+                        )
+
+                        if document_count > 0:
                             self.connector.update_document(
                                 "weather_data",
                                 {"provincial_plate": provincial_plate, "date": parsed_date},

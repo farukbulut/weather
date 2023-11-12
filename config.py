@@ -1,2 +1,2 @@
-DB_URL = "mongodb://localhost:27017/"
-DB_NAME = "weather"
+DB_URL = "mongodb://host.docker.internal:27017/"
+DB_NAME = "omer_faruk_bulut"

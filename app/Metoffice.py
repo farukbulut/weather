@@ -18,11 +18,10 @@ class Metoffice:
         city_name = func.correct_city_name(city_name)
 
         myquery = {"link": href, "website": "metoffice"}
-        existing_documents = self.connector.find_document("links", myquery)
-
-        if existing_documents.count() == 0:
+        document_count = self.connector.get_collection("links").count_documents(myquery)
+        if document_count == 0:
             query_for_plate = {"city": city_name, "website": "havadurumux"}
-            existing_plate_document = self.connector.find_document("links", query_for_plate)
+            plate_count = self.connector.get_collection("links").count_documents(query_for_plate)
             last_activity_date = datetime.now() - timedelta(days=1)
 
             mydict = {
@@ -33,7 +32,8 @@ class Metoffice:
                 "last_activity": last_activity_date.strftime('%Y-%m-%d')
             }
 
-            if existing_plate_document.count() > 0:
+            if plate_count > 0:
+                existing_plate_document = self.connector.find_document("links", query_for_plate)
                 plate_no = existing_plate_document[0].get('plate_no')
                 if plate_no:
                     mydict['plate_no'] = plate_no
@@ -87,10 +87,14 @@ class Metoffice:
                             temp_high_val = float(temp_high.get("data-value").strip())
                             temp_low_val = float(temp_low.get("data-value").strip())
 
-                            existing_data = self.connector.find_document("weather_data",
-                                                                         {"provincial_plate": provincial_plate,
-                                                                          "date": parsed_time})
-                            if existing_data.count() > 0:
+                            document_count = self.connector.get_collection("weather_data").count_documents(
+                                {
+                                    "provincial_plate": provincial_plate,
+                                    "date": parsed_time
+                                }
+                            )
+
+                            if document_count > 0:
                                 self.connector.update_document(
                                     "weather_data",
                                     {"provincial_plate": provincial_plate, "date": parsed_time},

@@ -53,8 +53,8 @@ class Weather:
 
                             myquery = {"plate_no": plate_no, "website": "weather"}
 
-                            existing_documents = self.connector.find_document("links", myquery)
-                            if existing_documents.count() == 0:
+                            document_count = self.connector.get_collection("links").count_documents(myquery)
+                            if document_count == 0:
                                 # MongoDB'de 'weather_urls' koleksiyonuna kaydetme
 
                                 last_activity_date = datetime.now() - timedelta(days=1)
@@ -122,10 +122,15 @@ class Weather:
                         temp_high_val = functions.extract_number(temp_high)
                         temp_low_val = functions.extract_number(temp_low)
 
-                        existing_data = self.connector.find_document("weather_data",
-                                                                     {"provincial_plate": provincial_plate,
-                                                                      "date": parsed_date})
-                        if existing_data.count() > 0:
+
+                        document_count = self.connector.get_collection("weather_data").count_documents(
+                            {
+                                "provincial_plate": provincial_plate,
+                                "date": parsed_date
+                             }
+                        )
+
+                        if document_count > 0:
                             self.connector.update_document(
                                 "weather_data",
                                 {"provincial_plate": provincial_plate, "date": parsed_date},
